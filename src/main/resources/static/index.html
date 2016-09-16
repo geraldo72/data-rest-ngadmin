@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>My First Admin</title>
+        <link rel="stylesheet" href="css/main.css">
+    </head>
+    <body ng-app="myApp">
+        <div ui-view></div>
+        <script src="js/ng-admin.min.js" type="text/javascript"></script>
+        <script type="text/javascript">
+		    var myApp = angular.module('myApp', ['ng-admin']);
+		    myApp.config(['NgAdminConfigurationProvider', function (nga) {
+		        // create an admin application
+		        var admin = nga.application('My First Admin')
+		          .baseApiUrl('http://localhost:8080/'); // main API endpoint
+		        // create a user entity
+		        // the API endpoint for this entity will be 'http://jsonplaceholder.typicode.com/users/:id
+		        var user = nga.entity('people');
+		        // set the fields of the user entity list view
+		        user.listView().fields([
+		            nga.field('id').isDetailLink(true),
+		            nga.field('firstName'),
+		            nga.field('lastName')
+		        ]);
+		        user.showView().fields(user.listView().fields());
+		        user.creationView().fields([
+		        		nga.field('firstName'),
+			            nga.field('lastName')
+			            ]);
+                // use the same fields for the editionView as for the creationView
+                user.editionView().fields(user.creationView().fields());
+                admin.addEntity(user);
+		        // attach the admin application to the DOM and execute it
+		        nga.configure(admin);
+		    }]);
+		    myApp.config(['RestangularProvider', function (RestangularProvider) {
+		    	RestangularProvider.addResponseInterceptor(function(data, operation, what, url, response, deferred) {
+		    		if (operation == 'getList') {
+		    	        resp =  data._embedded[what];
+		    	        resp._links = data._links;
+		    	        return resp;
+		    	      }
+		            return data;
+		          });
+		    }]);
+		    // Using self link for self reference resources
+		    RestangularProvider.setRestangularFields({
+		      selfLink: 'self.link'
+		    });
+		    </script>
+    </body>
+</html>
